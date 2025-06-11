@@ -1,18 +1,13 @@
 from fastapi import FastAPI, Depends
+from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from models import Users
-from sqlmodel import Session, SQLModel, create_engine, select
-import os
-from dotenv import load_dotenv
-from typing import Annotated
+from sqlmodel import Session, select
 from fastapi.middleware.cors import CORSMiddleware
+from database import engine
 
-load_dotenv()
-
-async def lifespan(app: FastAPI):
-    create_db_and_tables()  
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,27 +17,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-conn_url = os.getenv("DATABASE_URL")
-engine = create_engine(conn_url)
+clerk_config = ClerkConfig(jwks_url="https://working-leopard-42.clerk.accounts.dev/.well-known/jwks.json")
+clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-    
-def get_session():
-    with Session(engine) as session:
-        yield session
-        
-SessionDep = Annotated[Session, Depends(get_session)]
+@app.get('/')
+async def read_root(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    return JSONResponse(content=jsonable_encoder(credentials))
 
-
-@app.get("/")
-def get_all_users():
+@app.get("/api/all")
+def get_all_users(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
         users = session.exec(select(Users)).all()
     return users
 
 @app.get("/api/users/{user_id}")
-def user_data(user_id: str):
+def user_data(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
         user = session.exec(select(Users).where(Users.user_id == user_id)).first()
     return user

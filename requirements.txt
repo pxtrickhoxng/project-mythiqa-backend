@@ -2,3 +2,5 @@ fastapi[standard]
 psycopg2-binary
 python-dotenv
 sqlmodel
+requests
+fastapi-clerk-auth
