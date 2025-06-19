@@ -1,11 +1,16 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from models import Users
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
+from schemas import CreateUser, DeleteUser, UpdateUser # type: ignore
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -24,14 +29,77 @@ clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
 async def read_root(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     return JSONResponse(content=jsonable_encoder(credentials))
 
-@app.get("/api/all")
+@app.get("/api/users/all")
 def get_all_users(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
         users = session.exec(select(Users)).all()
     return users
 
-@app.get("/api/users/{user_id}")
-def user_data(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+@app.get("/api/users/{username}")
+def user_data(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
-        user = session.exec(select(Users).where(Users.user_id == user_id)).first()
+        user = session.exec(
+            select(Users).where(func.lower(Users.username) == username.lower())
+        ).first()
     return user
+
+@app.post("/api/users/create", status_code=201)
+def create_user(user: CreateUser, authorization: str = Header(None)): 
+    if authorization != f"Bearer {os.getenv("CLERK_SECRET_KEY")}":
+        raise HTTPException(status_code=401, detail='Unauthorized')
+
+    with Session(engine) as session:
+        existing_user = session.exec(select(Users).where(Users.user_id == user.user_id)).first()
+        if existing_user:
+            return {"message": "User already exists"}
+        new_user = Users(
+            user_id=user.user_id,
+            username=user.username,
+            email=user.email,
+            description=user.description,
+            profile_background_img_url=user.profile_background_img_url,
+            user_profile_url=user.user_profile_url,
+            role=user.role
+        )
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+    return {"message": "User created"}
+ 
+@app.get("/api/test", status_code=200) 
+def test(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user_id = credentials.decoded['sub']
+    print(user_id)
+
+@app.put("/api/users/update", status_code=200)
+def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user_id = credentials.decoded['sub']
+    print(user_id)
+    with Session(engine) as session:
+        db_user = session.exec(select(Users).where(Users.user_id == user_id)).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        db_user.username = user.username
+        db_user.description = user.description
+        db_user.profile_background_img_url = user.profile_background_img_url
+        db_user.user_profile_url = user.user_profile_url
+        session.add(db_user)
+        session.commit()
+        session.refresh(db_user)
+    return {"message": "User updated"}
+   
+@app.delete("/api/users/delete", status_code=200)
+def delete_user(user_id: DeleteUser, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    with Session(engine) as session:
+        db_user = session.exec(select(Users).where(Users.user_id == user_id.user_id)).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        session.delete(db_user)
+        session.commit()
+    return {"message": "User deleted"}
+   
+   
