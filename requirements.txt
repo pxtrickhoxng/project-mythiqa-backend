@@ -4,3 +4,4 @@ python-dotenv
 sqlmodel
 requests
 fastapi-clerk-auth
+boto3

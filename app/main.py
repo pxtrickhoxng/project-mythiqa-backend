@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, File, UploadFile, Form
 from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
@@ -9,6 +9,8 @@ from database import engine
 from schemas import CreateUser, DeleteUser, UpdateUser # type: ignore
 from dotenv import load_dotenv
 import os
+import boto3
+from botocore.exceptions import ClientError
 
 load_dotenv()
 
@@ -24,6 +26,13 @@ app.add_middleware(
 
 clerk_config = ClerkConfig(jwks_url="https://working-leopard-42.clerk.accounts.dev/.well-known/jwks.json")
 clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
+
+s3 = boto3.resource(
+    's3',
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("AWS_DEFAULT_REGION")
+)
 
 @app.get('/')
 async def read_root(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
@@ -78,7 +87,6 @@ def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = De
     if credentials.decoded is None:
         raise HTTPException(status_code=401, detail="Invalid token")
     user_id = credentials.decoded['sub']
-    print(user_id)
     with Session(engine) as session:
         db_user = session.exec(select(Users).where(Users.user_id == user_id)).first()
         if not db_user:
@@ -102,4 +110,16 @@ def delete_user(user_id: DeleteUser, credentials: HTTPAuthorizationCredentials =
         session.commit()
     return {"message": "User deleted"}
    
-   
+@app.post("/api/upload", status_code=200)
+async def upload_file(bgImgFile: UploadFile = File(required=True), bucket: str = Form(required=True) ):
+    try:
+        s3_client = boto3.client('s3')
+        s3_client.upload_fileobj(bgImgFile.file, bucket, bgImgFile.filename)
+        
+        region = os.getenv("AWS_DEFAULT_REGION")
+        url = f"https://{bucket}.s3.{region}.amazonaws.com/{bgImgFile.filename}"
+        return {"url": url}
+    except ClientError as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
