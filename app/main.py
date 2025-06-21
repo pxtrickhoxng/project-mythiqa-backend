@@ -45,12 +45,20 @@ def get_all_users(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth
     return users
 
 @app.get("/api/users/{username}")
-def user_data(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+def user_data(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):    
     with Session(engine) as session:
         user = session.exec(
             select(Users).where(func.lower(Users.username) == username.lower())
         ).first()
     return user
+
+@app.get("/api/users/{username}/profile-img")
+def user_profile_img(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    with Session(engine) as session:
+        user_profile_img_url = session.exec(
+            select(Users.user_profile_url).where(func.lower(Users.username) == username.lower())
+        ).first()
+    return {"user_profile_img_url": user_profile_img_url }
 
 @app.post("/api/users/create", status_code=201)
 def create_user(user: CreateUser, authorization: str = Header(None)): 
@@ -111,14 +119,34 @@ def delete_user(user_id: DeleteUser, credentials: HTTPAuthorizationCredentials =
     return {"message": "User deleted"}
    
 @app.post("/api/upload", status_code=200)
-async def upload_file(bgImgFile: UploadFile = File(required=True), bucket: str = Form(required=True) ):
+async def upload_file(
+    bg_img_file: UploadFile = File(required=True), 
+    user_profile_img_file: UploadFile = File(required=True),
+    bucket: str = Form(required=True), 
+    credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard) 
+):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
     try:
+        user_id = credentials.decoded['sub']
+        bg_img_object_key = f"{user_id}/profile/{bg_img_file.filename}"
+        profile_img_object_key = f"{user_id}/profile/{user_profile_img_file.filename}"
+        
         s3_client = boto3.client('s3')
-        s3_client.upload_fileobj(bgImgFile.file, bucket, bgImgFile.filename)
+
+        #upload user background img
+        s3_client.upload_fileobj(bg_img_file.file, bucket, bg_img_object_key)
+        
+        #upload user profile img
+        s3_client.upload_fileobj(user_profile_img_file.file, bucket, profile_img_object_key)
         
         region = os.getenv("AWS_DEFAULT_REGION")
-        url = f"https://{bucket}.s3.{region}.amazonaws.com/{bgImgFile.filename}"
-        return {"url": url}
+        
+        bg_img_url = f"https://{bucket}.s3.{region}.amazonaws.com/{bg_img_object_key}"
+        profile_img_url = f"https://{bucket}.s3.{region}.amazonaws.com/{profile_img_object_key}"
+        
+        return {"bg_img_url": bg_img_url, "profile_img_url": profile_img_url}
+    
     except ClientError as e:
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
     except Exception as e:
