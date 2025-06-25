@@ -2,15 +2,16 @@ from fastapi import FastAPI, Depends, HTTPException, Header, File, UploadFile, F
 from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from models import Users
+from models import Users, Books
 from sqlmodel import Session, select, func
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
-from schemas import CreateUser, DeleteUser, UpdateUser # type: ignore
+from schemas import CreateUser, DeleteUser, UpdateUser #type: ignore
 from dotenv import load_dotenv
 import os
 import boto3
 from botocore.exceptions import ClientError
+import json
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["http://localhost:3000"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -151,3 +152,58 @@ async def upload_file(
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+@app.post("/api/{user_id}/create-story", status_code=200)
+async def create_story(
+    user_id: str,
+    book_name: str = Form(...),
+    book_type: str = Form(...),
+    description: str = Form(None),
+    genre: str = Form(None),
+    target_audience: str = Form(None),
+    content_warnings: str = Form("[]"), 
+    book_cover: UploadFile = File(None),
+    bucket: str = Form(required=True),
+    credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)
+):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    authenticated_user_id = credentials.decoded['sub']
+    if user_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized to create story for this user")
+
+    try:
+        parsed_content_warnings = json.loads(content_warnings)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in content_warnings")
+    
+    book_cover_url = None
+
+    with Session(engine) as session:
+        existing_book = session.exec(select(Books).where(Books.book_name == book_name)).first()
+        if existing_book:
+            raise HTTPException(status_code=409, detail="Book already exists")
+        
+        if book_cover:
+            s3_client = boto3.client('s3')
+            object_key = f"{user_id}/books/{book_cover.filename}"
+            s3_client.upload_fileobj(book_cover.file, bucket, object_key)
+            region = os.getenv("AWS_DEFAULT_REGION")
+            book_cover_url = f"https://{bucket}.s3.{region}.amazonaws.com/{object_key}"
+        
+        new_book = Books(
+            user_id=user_id,
+            book_name=book_name,
+            book_type=book_type,
+            description=description,
+            genre=genre,
+            target_audience=target_audience,
+            content_warnings=parsed_content_warnings, 
+            book_cover_url=book_cover_url,
+        )
+        session.add(new_book)
+        session.commit()
+        session.refresh(new_book)
+    return {"message": "User created", "new_book": new_book}
+    

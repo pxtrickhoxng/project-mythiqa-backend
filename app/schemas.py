@@ -23,3 +23,4 @@ class UpdateUser(BaseModel):
 
 class DeleteUser(BaseModel):
     user_id: str
+    
