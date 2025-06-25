@@ -21,6 +21,4 @@ class UpdateUser(BaseModel):
     profile_background_img_url: Optional[str] = None
     description: Optional[str] = None
 
-class DeleteUser(BaseModel):
-    user_id: str
     

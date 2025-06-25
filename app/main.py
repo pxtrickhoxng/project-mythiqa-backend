@@ -6,7 +6,7 @@ from models import Users, Books
 from sqlmodel import Session, select, func
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
-from schemas import CreateUser, DeleteUser, UpdateUser #type: ignore
+from schemas import CreateUser, UpdateUser #type: ignore
 from dotenv import load_dotenv
 import os
 import boto3
@@ -110,7 +110,7 @@ def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = De
     return {"message": "User updated"}
    
 @app.delete("/api/users/delete", status_code=200)
-def delete_user(user_id: DeleteUser, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+def delete_user(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
         db_user = session.exec(select(Users).where(Users.user_id == user_id.user_id)).first()
         if not db_user:
@@ -206,4 +206,18 @@ async def create_story(
         session.commit()
         session.refresh(new_book)
     return {"message": "User created", "new_book": new_book}
+
+@app.post("/api/{user_id}/stories", status_code=200)
+def fetch_stories(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
     
+    authenticated_user_id = credentials.decoded['sub']
+    if user_id != authenticated_user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized to create story for this user")
+
+    with Session(engine) as session:
+        books = session.exec(select(Books).where(Books.user_id == user_id)).all()
+    
+    return books
+        
