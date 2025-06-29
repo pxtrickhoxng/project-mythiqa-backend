@@ -6,7 +6,7 @@ from models import Users, Books
 from sqlmodel import Session, select, func
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
-from schemas import CreateUser, UpdateUser #type: ignore
+from schemas import CreateUser, UpdateUser, ChapterContent #type: ignore
 from dotenv import load_dotenv
 import os
 import boto3
@@ -112,7 +112,7 @@ def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = De
 @app.delete("/api/users/delete", status_code=200)
 def delete_user(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
-        db_user = session.exec(select(Users).where(Users.user_id == user_id.user_id)).first()
+        db_user = session.exec(select(Users).where(Users.user_id == user_id)).first()
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
         session.delete(db_user)
@@ -220,4 +220,9 @@ def fetch_stories(user_id: str, credentials: HTTPAuthorizationCredentials = Depe
         books = session.exec(select(Books).where(Books.user_id == user_id)).all()
     
     return books
-        
+
+@app.post("/api/{book_id}/create-chapter", status_code=200)
+def create_chapter(chapter_content: ChapterContent, book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return chapter_content

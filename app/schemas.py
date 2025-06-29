@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Dict, Any, List
 from enum import Enum
 
 class UserRole(str, Enum):
@@ -21,4 +21,7 @@ class UpdateUser(BaseModel):
     profile_background_img_url: Optional[str] = None
     description: Optional[str] = None
 
+class ChapterContent(BaseModel):
+    type: str = "doc"
+    content: List[Dict[str, Any]] 
     
