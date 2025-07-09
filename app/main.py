@@ -12,6 +12,9 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 import json
+import uuid
+from datetime import datetime, UTC
+from boto3.dynamodb.conditions import Key, Attr
 
 load_dotenv()
 
@@ -34,6 +37,15 @@ s3 = boto3.resource(
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     region_name=os.getenv("AWS_DEFAULT_REGION")
 )
+
+dynamodb = boto3.resource(
+    'dynamodb',
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("AWS_DEFAULT_REGION")
+)
+
+chapters = dynamodb.Table('Chapters')
 
 @app.get('/')
 async def read_root(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
@@ -83,13 +95,6 @@ def create_user(user: CreateUser, authorization: str = Header(None)):
         session.commit()
         session.refresh(new_user)
     return {"message": "User created"}
- 
-@app.get("/api/test", status_code=200) 
-def test(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
-    if credentials.decoded is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    user_id = credentials.decoded['sub']
-    print(user_id)
 
 @app.put("/api/users/update", status_code=200)
 def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
@@ -221,8 +226,63 @@ def fetch_stories(user_id: str, credentials: HTTPAuthorizationCredentials = Depe
     
     return books
 
-@app.post("/api/{book_id}/create-chapter", status_code=200)
-def create_chapter(chapter_content: ChapterContent, book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+@app.get("/api/{book_id}", status_code=200)
+def get_story(book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     if credentials.decoded is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    return chapter_content
+    
+    with Session(engine) as session:
+        book = session.exec(select(Books).where(Books.book_id == book_id)).first()
+        
+    return book
+
+@app.post("/api/{book_id}/create-chapter", status_code=200)
+def create_chapter(
+    book_id: str, 
+    chapter_name: str = Form(...),
+    chapter_content: str = Form(...),
+    credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)
+):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    try:
+        chapter_content_json = json.loads(chapter_content)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in chapter_content")
+    
+    chapter_id = str(uuid.uuid4())
+    creation_date = datetime.now(UTC).isoformat()
+
+    chapter_payload =  {
+        "book_id": book_id,
+        "creation_date": creation_date,
+        "chapter_name": chapter_name,
+        "chapter_content": chapter_content_json,
+        "chapter_id": chapter_id
+    }
+    
+    try:
+        chapters.put_item(Item=chapter_payload)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to write chapter to database")
+    return {'message': 'success'}
+
+@app.get('/api/test2')
+def testing():
+    response = chapters.query(
+        KeyConditionExpression=Key('book_id').eq("1")
+    )
+    item = response['Items']
+    return(item)
+
+@app.get("/api/get-chapters/{book_id}", status_code=200)
+def get_chapters(book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    response = chapters.query(
+        KeyConditionExpression=Key('book_id').eq(book_id)
+    )
+    item = response['Items']
+    return(item)
