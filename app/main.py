@@ -15,6 +15,7 @@ import json
 import uuid
 from datetime import datetime, UTC
 from boto3.dynamodb.conditions import Key, Attr
+from util.get_token import get_token_from_header
 
 load_dotenv()
 
@@ -45,7 +46,7 @@ dynamodb = boto3.resource(
     region_name=os.getenv("AWS_DEFAULT_REGION")
 )
 
-chapters = dynamodb.Table('Chapters')
+chapters = dynamodb.Table('Chapters') 
 
 @app.get('/')
 async def read_root(credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
@@ -227,8 +228,8 @@ def fetch_stories(user_id: str, credentials: HTTPAuthorizationCredentials = Depe
     return books
 
 @app.get("/api/{book_id}", status_code=200)
-def get_story(book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
-    if credentials.decoded is None:
+def get_story(book_id: str, token: str = Depends(get_token_from_header)):
+    if token is None or token != os.getenv("FRONTEND_API_KEY"):
         raise HTTPException(status_code=401, detail="Invalid token")
     
     with Session(engine) as session:
@@ -236,9 +237,10 @@ def get_story(book_id: str, credentials: HTTPAuthorizationCredentials = Depends(
         
     return book
 
-@app.post("/api/{book_id}/create-chapter", status_code=200)
+@app.post("/api/{book_id}/create-chapter/{chapter_number}", status_code=200)
 def create_chapter(
-    book_id: str, 
+    book_id: str,
+    chapter_number: str, 
     chapter_name: str = Form(...),
     chapter_content: str = Form(...),
     credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)
@@ -256,6 +258,7 @@ def create_chapter(
 
     chapter_payload =  {
         "book_id": book_id,
+        "chapter_number": chapter_number,
         "creation_date": creation_date,
         "chapter_name": chapter_name,
         "chapter_content": chapter_content_json,
@@ -268,21 +271,48 @@ def create_chapter(
         raise HTTPException(status_code=500, detail="Failed to write chapter to database")
     return {'message': 'success'}
 
-@app.get('/api/test2')
-def testing():
+@app.get("/api/{book_id}/get-new-chapter-number", status_code=200)
+def chapter_number(book_id: str, token: str = Depends(get_token_from_header)):
+    if token is None or token != os.getenv("FRONTEND_API_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     response = chapters.query(
-        KeyConditionExpression=Key('book_id').eq("1")
+        KeyConditionExpression=Key('book_id').eq(book_id),
+        Select='COUNT' 
+    )
+    
+    chapter_count = response.get('Count', 0)
+
+    return {"chapter_number": chapter_count + 1}
+
+@app.get("/api/get-chapters/{book_id}", status_code=200)
+def get_chapters(book_id: str, token: str = Depends(get_token_from_header)):
+    if token is None or token != os.getenv("FRONTEND_API_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    response = chapters.query(
+        KeyConditionExpression=Key('book_id').eq(book_id),
+        ProjectionExpression='chapter_id, chapter_number, chapter_name, creation_date'
     )
     item = response['Items']
     return(item)
 
-@app.get("/api/get-chapters/{book_id}", status_code=200)
-def get_chapters(book_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
-    if credentials.decoded is None:
+@app.get("/api/book/{book_id}/chapter/{chapter}", status_code=200)
+def get_chapter(book_id: str, chapter: int, token: str = Depends(get_token_from_header)):
+    if token is None or token != os.getenv("FRONTEND_API_KEY"):
         raise HTTPException(status_code=401, detail="Invalid token")
     
     response = chapters.query(
-        KeyConditionExpression=Key('book_id').eq(book_id)
+        KeyConditionExpression=Key('book_id').eq(book_id),
+        ScanIndexForward=True,
     )
-    item = response['Items']
-    return(item)
+    
+    items = response.get('Items', [])
+    
+    if chapter < 1 or chapter > len(items):
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    return items[chapter - 1]
+    
+    
+    
