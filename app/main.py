@@ -307,12 +307,34 @@ def get_chapter(book_id: str, chapter: int, token: str = Depends(get_token_from_
         ScanIndexForward=True,
     )
     
+    sideResponse = chapters.query(
+        KeyConditionExpression=Key('book_id').eq(book_id),
+        ProjectionExpression='chapter_number, chapter_name'
+    )
+    
     items = response.get('Items', [])
+    sideItems = sideResponse.get('Items', [])
     
-    if chapter < 1 or chapter > len(items):
-        raise HTTPException(status_code=404, detail="Chapter not found")
+    current_index = chapter - 1
+
+    prev_chapter = sideItems[current_index - 1] if current_index > 0 else None
+    next_chapter = sideItems[current_index + 1] if current_index + 1 < len(sideItems) else None
+
+    return {
+        "currentChapter": items[current_index],
+        "prevChapter": prev_chapter,
+        "nextChapter": next_chapter
+    }
     
-    return items[chapter - 1]
+@app.get("/api/{user_id}/num-of-books", status_code=200)
+def get_num_of_books(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+    if credentials.decoded is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
     
+    if user_id != credentials.decoded['sub']:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     
+    with Session(engine) as session:
+        num_of_books = session.exec(select(func.count()).select_from(Books).where(Books.user_id == user_id)).first()
     
+    return {'count': num_of_books}
