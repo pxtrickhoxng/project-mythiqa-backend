@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple, Union
 from enum import Enum
 
 class UserRole(str, Enum):
@@ -24,4 +24,26 @@ class UpdateUser(BaseModel):
 class ChapterContent(BaseModel):
     type: str = "doc"
     content: List[Dict[str, Any]] 
+
+
+class Event(BaseModel):
+    eventText: str
+    eventTextColor: str
+    eventBgColor: str
+
+class Detail(BaseModel):
+    detailTitle: str
+    detailContent: str
+    detailColor: str
+ 
+class TimelineCardContent(BaseModel):
+    bookId: str
+    index: int  
+    userId: str
+    eventTag: Event
+    cardTitle: str
+    cardColor: str
+    chapter: str
+    details: List[Detail]
+
     
