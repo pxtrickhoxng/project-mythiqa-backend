@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from sqlalchemy import func
 from models import Users
 from schemas import CreateUser, UpdateUser #type: ignore
-from dependencies import clerk_auth_guard, s3, dynamodb
+from dependencies import clerk_auth_guard, s3
 from database import engine
 from fastapi_clerk_auth import HTTPAuthorizationCredentials
 from botocore.exceptions import ClientError
@@ -15,15 +15,25 @@ from models import Books
 router = APIRouter(prefix="/api/users")
 
 @router.get("/{username}")
-def user_data(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):    
+def user_data(username: str):     
     with Session(engine) as session:
         user = session.exec(
             select(Users).where(func.lower(Users.username) == username.lower())
         ).first()
-    return user
+        
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "username": user.username,
+        "description": user.description,
+        "profile_background_img_url": user.profile_background_img_url,
+        "user_profile_url": user.user_profile_url,
+        "created_at": user.created_at
+    }
 
 @router.get("/{username}/profile-img")
-def user_profile_img(username: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
+def user_profile_img(username: str):
     with Session(engine) as session:
         user_profile_img_url = session.exec(
             select(Users.user_profile_url).where(func.lower(Users.username) == username.lower())
@@ -32,7 +42,7 @@ def user_profile_img(username: str, credentials: HTTPAuthorizationCredentials = 
 
 @router.post("/create", status_code=201)
 def create_user(user: CreateUser, authorization: str = Header(None)): 
-    if authorization != f"Bearer {os.getenv("CLERK_SECRET_KEY")}":
+    if authorization != f"Bearer {os.getenv('CLERK_SECRET_KEY')}":
         raise HTTPException(status_code=401, detail='Unauthorized')
 
     with Session(engine) as session:
@@ -57,7 +67,9 @@ def create_user(user: CreateUser, authorization: str = Header(None)):
 def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     if credentials.decoded is None:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
     user_id = credentials.decoded['sub']
+    
     with Session(engine) as session:
         db_user = session.exec(select(Users).where(Users.user_id == user_id)).first()
         if not db_user:
@@ -70,7 +82,8 @@ def update_user(user: UpdateUser, credentials: HTTPAuthorizationCredentials = De
         session.commit()
         session.refresh(db_user)
     return {"message": "User updated"}
-   
+
+# yet to be implemented   
 @router.delete("/delete", status_code=200)
 def delete_user(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
     with Session(engine) as session:
@@ -117,14 +130,7 @@ async def upload_file(
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
 
 @router.get("/{user_id}/num-of-books", status_code=200)
-def get_num_of_books(user_id: str, credentials: HTTPAuthorizationCredentials = Depends(clerk_auth_guard)):
-    if credentials.decoded is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    if user_id != credentials.decoded['sub']:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
+def get_num_of_books(user_id: str):
     with Session(engine) as session:
         num_of_books = session.exec(select(func.count()).select_from(Books).where(Books.user_id == user_id)).first()
-    
     return {'count': num_of_books}

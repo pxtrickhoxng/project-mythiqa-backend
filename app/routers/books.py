@@ -89,8 +89,13 @@ def get_story(book_id: str, token: str = Depends(get_token_from_header)):
     
     with Session(engine) as session:
         book = session.exec(select(Books).where(Books.book_id == book_id)).first()
-        
-    return book
+    
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    book_dict = book.model_dump()
+    book_dict.pop("user_id", None)
+    return book_dict
 
 @router.post("/{book_id}/create-chapter/{chapter_number}", status_code=200)
 def create_chapter(
@@ -102,6 +107,14 @@ def create_chapter(
 ):
     if credentials.decoded is None:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user_id = credentials.decoded['sub']
+    
+    with Session(engine) as session:
+        book = session.exec(select(Books).where(Books.user_id == user_id, Books.book_id == book_id)).first()
+    
+    if not book:
+        raise HTTPException(status_code=403, detail="You are not allowed to create a chapter for this book")
     
     try:
         chapter_content_json = json.loads(chapter_content)
@@ -124,6 +137,7 @@ def create_chapter(
         chapters.put_item(Item=chapter_payload)
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to write chapter to database")
+    
     return {'message': 'success'}
 
 @router.get("/{book_id}/get-new-chapter-number", status_code=200)
@@ -180,3 +194,13 @@ def get_chapter(book_id: str, chapter: int, token: str = Depends(get_token_from_
         "prevChapter": prev_chapter,
         "nextChapter": next_chapter
     }
+
+@router.get("/{book_id}/cover", status_code=200)
+def get_story_cover(book_id: str, token: str = Depends(get_token_from_header)):
+    if token is None or token != os.getenv("FRONTEND_API_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    with Session(engine) as session:
+        book_cover = session.exec(select(Books.book_cover_url).where(Books.book_id == book_id)).first()
+        
+    return {"url": book_cover}

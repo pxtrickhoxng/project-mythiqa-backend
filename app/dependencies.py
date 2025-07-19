@@ -1,8 +1,15 @@
 from fastapi_clerk_auth import ClerkConfig, ClerkHTTPBearer
 import boto3
 import os
+from dotenv import load_dotenv
 
-clerk_config = ClerkConfig(jwks_url="https://working-leopard-42.clerk.accounts.dev/.well-known/jwks.json")
+load_dotenv()
+
+jwks_url = os.getenv("CLERK_JWKS_URL")
+if jwks_url is None:
+    raise ValueError("CLERK_JWKS_URL environment variable is not set")
+
+clerk_config = ClerkConfig(jwks_url= jwks_url)
 clerk_auth_guard = ClerkHTTPBearer(config=clerk_config)
 
 s3 = boto3.resource(
