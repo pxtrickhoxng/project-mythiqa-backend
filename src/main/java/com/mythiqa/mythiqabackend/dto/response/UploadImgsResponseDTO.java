@@ -15,15 +15,8 @@ public class UploadImgsResponseDTO {
         return bgImgUrl;
     }
 
-    public void setBgImgUrl(String bgImgUrl) {
-        this.bgImgUrl = bgImgUrl;
-    }
-
     public String getProfileImgUrl() {
         return profileImgUrl;
     }
 
-    public void setProfileImgUrl(String profileImgUrl) {
-        this.profileImgUrl = profileImgUrl;
-    }
 }

@@ -1,7 +1,6 @@
 package com.mythiqa.mythiqabackend.controller;
 
-import com.mythiqa.mythiqabackend.dto.request.UpdateUserDto;
-import com.mythiqa.mythiqabackend.dto.request.UploadImgsRequestDTO;
+import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
 import com.mythiqa.mythiqabackend.dto.response.UploadImgsResponseDTO;
 import com.mythiqa.mythiqabackend.dto.response.UserProfileDTO;
 import com.mythiqa.mythiqabackend.dto.response.UserProfileImgDTO;
@@ -60,9 +59,8 @@ public class UserController {
         return userService.createUser(user);
     }
 
-    // new mappings 8/24/2025
     @PutMapping("/update")
-    public void updateUser(@RequestBody UpdateUserDto user, @AuthenticationPrincipal Jwt jwt) {
+    public void updateUser(@ModelAttribute UpdateUserRequestDto user, @AuthenticationPrincipal Jwt jwt) {
         String requesterUserId = jwt.getClaim("sub");
         if (requesterUserId == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
@@ -78,14 +76,4 @@ public class UserController {
         }
         userService.deleteUser(requesterUserId);
     }
-    // UploadImgsResponseDTO
-    @PostMapping("upload-imgs")
-    public void uploadImgs(@ModelAttribute UploadImgsRequestDTO files, @AuthenticationPrincipal Jwt jwt) {
-        String requesterUserId = jwt.getClaim("sub");
-        if (requesterUserId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
-        }
-         userService.uploadImgs(files, requesterUserId);
-    }
-
 }
