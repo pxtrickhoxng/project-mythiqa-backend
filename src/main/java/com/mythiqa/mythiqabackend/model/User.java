@@ -18,31 +18,35 @@ public class User {
     @Column(nullable = false)
     private String username;
 
+    @Column(name = "display_name", nullable = false)
+    private String displayName;
+
     @Column(nullable = false)
     private String email;
 
     private String description;
 
     @Column(name = "profile_background_img_url")
-    private String profileBackgroundImgUrl;
+    private String userBackgroundImgUrl;
 
     @Column(name = "user_profile_url")
-    private String userProfileUrl;
+    private String userProfileImgUrl;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
 
     private String role;
 
     public User() {}
 
-    public User(String id, String username, String email, String description, String profileBackgroundImgUrl, String userProfileUrl, LocalDate createdAt, String role) {
+    public User(String id, String username, String displayName, String email, String description, String userBackgroundImgUrl, String userProfileImgUrl, LocalDate createdAt, String role) {
         this.id = id;
         this.username = username;
+        this.displayName = displayName;
         this.email = email;
         this.description = description;
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
-        this.userProfileUrl = userProfileUrl;
+        this.userBackgroundImgUrl = userBackgroundImgUrl;
+        this.userProfileImgUrl = userProfileImgUrl;
         this.createdAt = createdAt;
         this.role = role;
     }
@@ -63,6 +67,14 @@ public class User {
         this.username = username;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -79,20 +91,20 @@ public class User {
         this.description = description;
     }
 
-    public String getProfileBackgroundImgUrl() {
-        return profileBackgroundImgUrl;
+    public String getUserBackgroundImgUrl() {
+        return userBackgroundImgUrl;
     }
 
-    public void setProfileBackgroundImgUrl(String profileBackgroundImgUrl) {
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
+    public void setUserBackgroundImgUrl(String userBackgroundImgUrl) {
+        this.userBackgroundImgUrl = userBackgroundImgUrl;
     }
 
-    public String getUserProfileUrl() {
-        return userProfileUrl;
+    public String getUserProfileImgUrl() {
+        return userProfileImgUrl;
     }
 
-    public void setUserProfileUrl(String userProfileUrl) {
-        this.userProfileUrl = userProfileUrl;
+    public void setUserProfileImgUrl(String userProfileImgUrl) {
+        this.userProfileImgUrl = userProfileImgUrl;
     }
 
     public LocalDate getCreatedAt() {

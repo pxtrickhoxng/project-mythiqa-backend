@@ -1,29 +1,29 @@
 package com.mythiqa.mythiqabackend.dto.response;
 
 public class UserProfileAndBackgroundImagesDTO {
-    private String profileBackgroundImgUrl;
-    private String userProfileUrl;
+    private String userBackgroundImgUrl;
+    private String userProfileImgUrl;
 
     public UserProfileAndBackgroundImagesDTO() {}
 
-    public UserProfileAndBackgroundImagesDTO(String profileBackgroundImgUrl, String userProfileUrl) {
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
-        this.userProfileUrl = userProfileUrl;
+    public UserProfileAndBackgroundImagesDTO(String userBackgroundImgUrl, String userProfileImgUrl) {
+        this.userBackgroundImgUrl = userBackgroundImgUrl;
+        this.userProfileImgUrl = userProfileImgUrl;
     }
 
-    public String getProfileBackgroundImgUrl() {
-        return profileBackgroundImgUrl;
+    public String getUserBackgroundImgUrl() {
+        return userBackgroundImgUrl;
     }
 
-    public void setProfileBackgroundImgUrl(String profileBackgroundImgUrl) {
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
+    public void setUserBackgroundImgUrl(String userBackgroundImgUrl) {
+        this.userBackgroundImgUrl = userBackgroundImgUrl;
     }
 
-    public String getUserProfileUrl() {
-        return userProfileUrl;
+    public String getUserProfileImgUrl() {
+        return userProfileImgUrl;
     }
 
-    public void setUserProfileUrl(String userProfileUrl) {
-        this.userProfileUrl = userProfileUrl;
+    public void setUserProfileImgUrl(String userProfileImgUrl) {
+        this.userProfileImgUrl = userProfileImgUrl;
     }
 }

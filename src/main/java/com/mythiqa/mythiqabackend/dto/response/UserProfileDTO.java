@@ -4,59 +4,76 @@ package com.mythiqa.mythiqabackend.dto.response;
 import java.time.LocalDate;
 
 public class UserProfileDTO {
-    private String username;
-    private String description;
-    private String profileBackgroundImgUrl;
-    private String userProfileUrl;
-    private LocalDate createdAt;
+    private final String displayName;
+    private final String description;
+    private final String userBackgroundImgUrl;
+    private final String userProfileImgUrl;
+    private final LocalDate createdAt;
 
-    public UserProfileDTO () {}
-
-    public UserProfileDTO(String username, String description, String profileBackgroundImgUrl, String userProfileUrl, LocalDate createdAt) {
-        this.username = username;
-        this.description = description;
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
-        this.userProfileUrl = userProfileUrl;
-        this.createdAt = createdAt;
+    private UserProfileDTO(Builder builder) {
+        this.displayName = builder.displayName;
+        this.description = builder.description;
+        this.userBackgroundImgUrl = builder.userBackgroundImgUrl;
+        this.userProfileImgUrl = builder.userProfileImgUrl;
+        this.createdAt = builder.createdAt;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
+    public String getDisplayName() {
+        return displayName;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public String getUserBackgroundImgUrl() {
+        return userBackgroundImgUrl;
     }
 
-    public String getProfileBackgroundImgUrl() {
-        return profileBackgroundImgUrl;
-    }
-
-    public void setProfileBackgroundImgUrl(String profileBackgroundImgUrl) {
-        this.profileBackgroundImgUrl = profileBackgroundImgUrl;
-    }
-
-    public String getUserProfileUrl() {
-        return userProfileUrl;
-    }
-
-    public void setUserProfileUrl(String userProfileUrl) {
-        this.userProfileUrl = userProfileUrl;
+    public String getUserProfileImgUrl() {
+        return userProfileImgUrl;
     }
 
     public LocalDate getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
-        this.createdAt = createdAt;
+    public static class Builder {
+        private String displayName;
+        private String description;
+        private String userBackgroundImgUrl;
+        private String userProfileImgUrl;
+        private LocalDate createdAt;
+
+        public Builder displayName(String displayName) {
+            this.displayName = displayName;
+            return this;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder userBackgroundImgUrl(String userBackgroundImgUrl) {
+            this.userBackgroundImgUrl = userBackgroundImgUrl;
+            return this;
+        }
+
+        public Builder userProfileImgUrl(String userProfileImgUrl) {
+            this.userProfileImgUrl = userProfileImgUrl;
+            return this;
+        }
+
+        public Builder createdAt(LocalDate createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public UserProfileDTO build() {
+            return new UserProfileDTO(this);
+        }
     }
+
+
 }
