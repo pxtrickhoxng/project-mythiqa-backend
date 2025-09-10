@@ -1,5 +1,6 @@
 package com.mythiqa.mythiqabackend.service;
 
+import com.mythiqa.mythiqabackend.config.S3Config;
 import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateDisplayNameRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
@@ -14,6 +15,7 @@ import com.mythiqa.mythiqabackend.projection.user.UserProfileImgProjection;
 import com.mythiqa.mythiqabackend.projection.user.UserProfileProjection;
 import com.mythiqa.mythiqabackend.repository.BookRepository;
 import com.mythiqa.mythiqabackend.repository.UserRepository;
+import com.mythiqa.mythiqabackend.util.JwtUtils;
 import com.mythiqa.mythiqabackend.util.S3Utils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,16 +35,16 @@ public class UserService {
     private final BookRepository bookRepository;
     private final FileService fileService;
     private final ClerkService clerkService;
+    private final S3Config s3Config;
 
-    public UserService(UserRepository userRepository, BookRepository bookRepository, FileService fileService, ClerkService clerkService) {
+
+    public UserService(UserRepository userRepository, BookRepository bookRepository, FileService fileService, ClerkService clerkService, S3Config s3Config) {
         this.userRepository = userRepository;
         this.bookRepository = bookRepository;
         this.fileService = fileService;
         this.clerkService = clerkService;
+        this.s3Config = s3Config;
     }
-
-    @Value("${aws.s3.region}")
-    private String region;
 
     public boolean checkUserExistsById(String userId) {
         return userRepository.existsById(userId);
@@ -62,7 +64,7 @@ public class UserService {
 
     @Transactional
     public void createUser(CreateUserRequestDTO dto, Jwt jwt) {
-        String requesterUserId = getUserIdFromJwt(jwt);
+        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         boolean userExists = userRepository.existsById(requesterUserId);
         if (userExists) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
@@ -74,7 +76,7 @@ public class UserService {
 
     @Transactional
     public void updateUser(UpdateUserRequestDto updateUser, Jwt jwt) {
-        String requesterUserId = getUserIdFromJwt(jwt);
+        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         User user = userRepository.findById(requesterUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -87,7 +89,7 @@ public class UserService {
         if (updateUser.getUserBackgroundImgFile() != null && !updateUser.getUserBackgroundImgFile().isEmpty()) {
             String bgImgObjectKey = requesterUserId + "/profile/" + updateUser.getUserBackgroundImgFile().getOriginalFilename();
             fileService.uploadFile(updateUser.getUserBackgroundImgFile(), bgImgObjectKey);
-            bgImgUrl = "https://" + fileService.getBucketName() + ".s3." + region + ".amazonaws.com/" + bgImgObjectKey;
+            bgImgUrl = "https://" + fileService.getBucketName() + ".s3." + s3Config.getRegion() + ".amazonaws.com/" + bgImgObjectKey;
 
             // Delete old background image if it exists
             if (oldBgImgKey != null) {
@@ -98,7 +100,7 @@ public class UserService {
         if (updateUser.getUserProfileImgFile() != null && !updateUser.getUserProfileImgFile().isEmpty()) {
             String profileImgObjectKey = requesterUserId + "/profile/" + updateUser.getUserProfileImgFile().getOriginalFilename();
             fileService.uploadFile(updateUser.getUserProfileImgFile(), profileImgObjectKey);
-            profileImgUrl = "https://" + fileService.getBucketName() + ".s3." + region + ".amazonaws.com/" + profileImgObjectKey;
+            profileImgUrl = "https://" + fileService.getBucketName() + ".s3." + s3Config.getRegion() + ".amazonaws.com/" + profileImgObjectKey;
 
             // Delete old profile image if it exists
             if (oldProfileImgKey != null) {
@@ -122,7 +124,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Jwt jwt) {
-        String requesterUserId = getUserIdFromJwt(jwt);
+        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         if (!userRepository.existsById(requesterUserId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
@@ -149,19 +151,11 @@ public class UserService {
 
     @Transactional
     public void updateDisplayName(UpdateDisplayNameRequestDTO dto, Jwt jwt) {
-        String requesterUserId = getUserIdFromJwt(jwt);
+        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         User user = userRepository.findById(requesterUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         user.setDisplayName(dto.getDisplayName());
         userRepository.save(user);
-    }
-
-    private String getUserIdFromJwt (Jwt jwt) {
-        String requesterUserId = jwt.getClaim("sub");
-        if (requesterUserId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
-        }
-        return requesterUserId;
     }
 }

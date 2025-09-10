@@ -22,6 +22,8 @@ public class ClerkService {
     @Value("${clerk.secret-key}")
     private String clerkSecret;
 
+    //“Your username is permanent and cannot be changed. You can change your display name anytime.”
+    // remove this service, change frontend accordingly
     public void updateClerkUsername(String userId, String newUsername) {
         try {
             webClient

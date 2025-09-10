@@ -33,4 +33,8 @@ public class S3Config {
                 )
                 .build();
     }
+
+    public String getRegion () {
+        return region;
+    }
 }

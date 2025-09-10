@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -60,18 +61,22 @@ public class UserController {
     }
 
     @PostMapping
-    public void createUser(@RequestBody CreateUserRequestDTO createUserRequest, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Void> createUser(@RequestBody CreateUserRequestDTO createUserRequest, @AuthenticationPrincipal Jwt jwt) {
         userService.createUser(createUserRequest, jwt);
+        URI location = URI.create("/api/users");
+        return ResponseEntity.created(location).build();
     }
 
     @PutMapping
-    public void updateUser(@ModelAttribute UpdateUserRequestDto updateUserRequest, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Void> updateUser(@ModelAttribute UpdateUserRequestDto updateUserRequest, @AuthenticationPrincipal Jwt jwt) {
         userService.updateUser(updateUserRequest, jwt);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping
-    public void deleteUser(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal Jwt jwt) {
         userService.deleteUser(jwt);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{userId}/books/count")
@@ -80,12 +85,8 @@ public class UserController {
     }
 
     @PutMapping("/display-name")
-    public void updateDisplayName(@Valid @RequestBody UpdateDisplayNameRequestDTO updateDisplayNameRequest, @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<Void> updateDisplayName(@Valid @RequestBody UpdateDisplayNameRequestDTO updateDisplayNameRequest, @AuthenticationPrincipal Jwt jwt) {
         userService.updateDisplayName(updateDisplayNameRequest, jwt);
+        return ResponseEntity.noContent().build();
     }
-
-    //TODO
-    // Return proper HTTP responses instead of void
-    // Use Optional.orElseThrow instead of manual checks.
-    // Right now updateUser mixes ResponseStatusException and RuntimeException — consider making exception handling uniform.
 }

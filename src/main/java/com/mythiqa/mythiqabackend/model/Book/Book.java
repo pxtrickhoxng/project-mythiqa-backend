@@ -1,5 +1,6 @@
-package com.mythiqa.mythiqabackend.model;
+package com.mythiqa.mythiqabackend.model.Book;
 
+import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -37,7 +38,21 @@ public class Book {
     private String bookCoverUrl;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDate createdAt = LocalDate.now();
+    private LocalDate createdAt;
+
+    public Book () {}
+
+    public Book (CreateBookRequestDTO dto, String userId, String bookCoverUrl) {
+        this.bookName = dto.getBookName();
+        this.userId = userId;
+        this.bookType = dto.getBookType();
+        this.description = dto.getDescription();
+        this.genre = dto.getGenre();
+        this.targetAudience = dto.getTargetAudience();
+        this.contentWarnings = dto.getContentWarnings();
+        this.bookCoverUrl = bookCoverUrl;
+        this.createdAt = LocalDate.now();
+    }
 
     public Integer getBookId() {
         return bookId;
