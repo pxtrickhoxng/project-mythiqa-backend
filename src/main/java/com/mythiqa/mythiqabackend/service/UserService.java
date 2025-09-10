@@ -1,5 +1,7 @@
 package com.mythiqa.mythiqabackend.service;
 
+import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
+import com.mythiqa.mythiqabackend.dto.request.UpdateDisplayNameRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
 import com.mythiqa.mythiqabackend.dto.response.UserDisplayNameDTO;
 import com.mythiqa.mythiqabackend.dto.response.UserNumOfBooksDTO;
@@ -16,6 +18,7 @@ import com.mythiqa.mythiqabackend.util.S3Utils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,34 +61,22 @@ public class UserService {
     }
 
     @Transactional
-    public void createUser(User user, Jwt jwt) {
-        String requesterUserId = jwt.getClaim("sub");
-        if (requesterUserId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
-        }
-        user.setId(requesterUserId);
-        boolean userExists = userRepository.existsById(user.getId());
+    public void createUser(CreateUserRequestDTO dto, Jwt jwt) {
+        String requesterUserId = getUserIdFromJwt(jwt);
+        boolean userExists = userRepository.existsById(requesterUserId);
         if (userExists) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
         }
 
-        user.setCreatedAt(LocalDate.now());
+        User user = new User(dto, requesterUserId);
         userRepository.save(user);
     }
 
     @Transactional
     public void updateUser(UpdateUserRequestDto updateUser, Jwt jwt) {
-        String requesterUserId = jwt.getClaim("sub");
-        if (requesterUserId == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
-        }
-
-        Optional<User> existingUser = userRepository.findById(requesterUserId);
-        if (!existingUser.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        User user = existingUser.get();
+        String requesterUserId = getUserIdFromJwt(jwt);
+        User user = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         String oldBgImgKey = S3Utils.extractS3ObjectKey(user.getUserBackgroundImgUrl());
         String oldProfileImgKey = S3Utils.extractS3ObjectKey(user.getUserProfileImgUrl());
@@ -118,16 +109,8 @@ public class UserService {
         user.setUserBackgroundImgUrl(bgImgUrl);
         user.setUserProfileImgUrl(profileImgUrl);
 
-        if (updateUser.getUsername() != null && !updateUser.getUsername().trim().isEmpty()) {
-            try {
-                // Update the username in clerk, and only update database if it succeeds
-                clerkService.updateClerkUsername(requesterUserId, updateUser.getUsername().trim());
-                user.setUsername(updateUser.getUsername().trim());
-            } catch (UsernameAlreadyTakenException e) {
-                throw e;
-            } catch (RuntimeException e) {
-                throw new RuntimeException("Failed to update username: " + e.getMessage());
-            }
+        if (updateUser.getDisplayName() != null && !updateUser.getDisplayName().trim().isEmpty()) {
+            user.setDisplayName(updateUser.getDisplayName().trim());
         }
 
         if (updateUser.getDescription() != null) {
@@ -139,14 +122,9 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Jwt jwt) {
-        String requesterUserId = jwt.getClaim("sub");
-        if (requesterUserId == null || requesterUserId.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
-        }
-
-        boolean userExists = userRepository.existsById(requesterUserId);
-        if (!userExists) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        String requesterUserId = getUserIdFromJwt(jwt);
+        if (!userRepository.existsById(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         userRepository.deleteById(requesterUserId);
@@ -167,5 +145,23 @@ public class UserService {
     public UserNumOfBooksDTO getNumOfBooksByUserId(String userId) {
         long bookCount = bookRepository.countByUserId(userId);
         return new UserNumOfBooksDTO(bookCount);
+    }
+
+    @Transactional
+    public void updateDisplayName(UpdateDisplayNameRequestDTO dto, Jwt jwt) {
+        String requesterUserId = getUserIdFromJwt(jwt);
+        User user = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setDisplayName(dto.getDisplayName());
+        userRepository.save(user);
+    }
+
+    private String getUserIdFromJwt (Jwt jwt) {
+        String requesterUserId = jwt.getClaim("sub");
+        if (requesterUserId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User ID not found in JWT.");
+        }
+        return requesterUserId;
     }
 }

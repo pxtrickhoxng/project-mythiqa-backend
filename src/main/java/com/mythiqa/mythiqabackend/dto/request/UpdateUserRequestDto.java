@@ -3,26 +3,26 @@ package com.mythiqa.mythiqabackend.dto.request;
 import org.springframework.web.multipart.MultipartFile;
 
 public class UpdateUserRequestDto {
-    private String username;
+    private String displayName;
     private String description;
     private MultipartFile userBackgroundImgFile;
     private MultipartFile userProfileImgFile;
 
     public UpdateUserRequestDto() {}
 
-    public UpdateUserRequestDto(String username, String description, MultipartFile userBackgroundImgFile, MultipartFile userProfileImgFile) {
-        this.username = username;
+    public UpdateUserRequestDto(String displayName, String description, MultipartFile userBackgroundImgFile, MultipartFile userProfileImgFile) {
+        this.displayName = displayName;
         this.description = description;
         this.userBackgroundImgFile = userBackgroundImgFile;
         this.userProfileImgFile = userProfileImgFile;
     }
 
-    public String getUsername() {
-        return username;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getDescription() {

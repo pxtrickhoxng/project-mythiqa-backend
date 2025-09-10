@@ -4,14 +4,14 @@ public class S3Utils {
 
     public static String extractS3ObjectKey(String url) {
         if (url == null || url.isEmpty()) {
-            return "";
+            return null;
         }
 
         // Find the "amazonaws.com/" part and take everything after it
         String marker = ".amazonaws.com/";
         int index = url.indexOf(marker);
         if (index == -1) {
-            return "";
+            return null;
         }
         return url.substring(index + marker.length());
     }

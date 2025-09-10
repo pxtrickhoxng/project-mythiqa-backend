@@ -1,5 +1,7 @@
 package com.mythiqa.mythiqabackend.controller;
 
+import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
+import com.mythiqa.mythiqabackend.dto.request.UpdateDisplayNameRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
 import com.mythiqa.mythiqabackend.dto.response.*;
 import com.mythiqa.mythiqabackend.model.User;
@@ -9,6 +11,7 @@ import com.mythiqa.mythiqabackend.projection.user.UserProfileProjection;
 import com.mythiqa.mythiqabackend.repository.BookRepository;
 import com.mythiqa.mythiqabackend.repository.UserRepository;
 import com.mythiqa.mythiqabackend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,13 +60,13 @@ public class UserController {
     }
 
     @PostMapping
-    public void createUser(@RequestBody User user, @AuthenticationPrincipal Jwt jwt) {
-        userService.createUser(user, jwt);
+    public void createUser(@RequestBody CreateUserRequestDTO createUserRequest, @AuthenticationPrincipal Jwt jwt) {
+        userService.createUser(createUserRequest, jwt);
     }
 
     @PutMapping
-    public void updateUser(@ModelAttribute UpdateUserRequestDto user, @AuthenticationPrincipal Jwt jwt) {
-        userService.updateUser(user, jwt);
+    public void updateUser(@ModelAttribute UpdateUserRequestDto updateUserRequest, @AuthenticationPrincipal Jwt jwt) {
+        userService.updateUser(updateUserRequest, jwt);
     }
 
     @DeleteMapping
@@ -76,7 +79,12 @@ public class UserController {
         return userService.getNumOfBooksByUserId(userId);
     }
 
-    // TODO: Use request DTO, NOT user Model for /create
+    @PutMapping("/display-name")
+    public void updateDisplayName(@Valid @RequestBody UpdateDisplayNameRequestDTO updateDisplayNameRequest, @AuthenticationPrincipal Jwt jwt) {
+        userService.updateDisplayName(updateDisplayNameRequest, jwt);
+    }
+
+    //TODO
     // Return proper HTTP responses instead of void
     // Use Optional.orElseThrow instead of manual checks.
     // Right now updateUser mixes ResponseStatusException and RuntimeException — consider making exception handling uniform.

@@ -1,5 +1,6 @@
 package com.mythiqa.mythiqabackend.model;
 
+import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -13,12 +14,12 @@ public class User {
 
     @Id
     @Column(name = "user_id", nullable = false)
-    private String id;
+    private String userId;
 
     @Column(nullable = false)
     private String username;
 
-    @Column(name = "display_name", nullable = false)
+    @Column(name = "display_name")
     private String displayName;
 
     @Column(nullable = false)
@@ -39,8 +40,8 @@ public class User {
 
     public User() {}
 
-    public User(String id, String username, String displayName, String email, String description, String userBackgroundImgUrl, String userProfileImgUrl, LocalDate createdAt, String role) {
-        this.id = id;
+    public User(String userId, String username, String displayName, String email, String description, String userBackgroundImgUrl, String userProfileImgUrl, LocalDate createdAt, String role) {
+        this.userId = userId;
         this.username = username;
         this.displayName = displayName;
         this.email = email;
@@ -51,12 +52,24 @@ public class User {
         this.role = role;
     }
 
-    public String getId() {
-        return id;
+    public User(CreateUserRequestDTO dto, String userId) {
+        this.userId = userId;
+        this.username = dto.getUsername();
+        this.displayName = dto.getDisplayName();
+        this.email = dto.getEmail();
+        this.description = dto.getDescription();
+        this.userBackgroundImgUrl = dto.getUserBackgroundImgUrl();
+        this.userProfileImgUrl = dto.getUserProfileImgUrl();
+        this.role = dto.getRole();
+        this.createdAt = LocalDate.now();
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String id) {
+        this.userId = userId;
     }
 
     public String getUsername() {
