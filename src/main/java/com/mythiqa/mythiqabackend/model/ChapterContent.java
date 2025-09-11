@@ -1,6 +1,4 @@
-package com.mythiqa.mythiqabackend.model.Book;
-
-import com.mythiqa.mythiqabackend.model.Chapter;
+package com.mythiqa.mythiqabackend.model;
 
 import java.util.List;
 import java.util.Map;

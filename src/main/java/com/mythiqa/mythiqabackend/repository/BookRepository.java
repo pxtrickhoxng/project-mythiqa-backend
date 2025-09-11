@@ -1,7 +1,7 @@
 package com.mythiqa.mythiqabackend.repository;
 
 
-import com.mythiqa.mythiqabackend.model.Book.Book;
+import com.mythiqa.mythiqabackend.model.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +12,6 @@ import java.util.Optional;
 public interface BookRepository extends JpaRepository<Book, Integer> {
     long countByUserId(String userId);
     List<Book> getBooksByUserId(String userId);
-    Optional<Book> getBookByBookId(int bookId);
+    Optional<Book> getBookByBookId(Integer bookId);
     boolean existsByBookName(String bookName);
 }

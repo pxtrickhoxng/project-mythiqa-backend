@@ -1,4 +1,4 @@
-package com.mythiqa.mythiqabackend.model.Book;
+package com.mythiqa.mythiqabackend.model;
 
 import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
 import jakarta.persistence.*;

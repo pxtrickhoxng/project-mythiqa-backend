@@ -1,8 +1,7 @@
 package com.mythiqa.mythiqabackend.model;
 
 import com.mythiqa.mythiqabackend.converter.ChapterContentConverter;
-import com.mythiqa.mythiqabackend.model.Book.Book;
-import com.mythiqa.mythiqabackend.model.Book.ChapterContent;
+import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -22,7 +21,7 @@ public class Chapter {
     @Column(name = "chapter_name", nullable = false)
     private String chapterName;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(name = "chapter_content", columnDefinition = "text")
     @Convert(converter = ChapterContentConverter.class)
     private ChapterContent chapterContent;
 
@@ -34,6 +33,14 @@ public class Chapter {
     private Book book;
 
     public Chapter () {}
+
+    public Chapter (CreateChapterDTO dto, Book book) {
+        this.chapterNumber = dto.getChapterNumber();
+        this.chapterName = dto.getChapterName();
+        this.chapterContent = dto.getChapterContent();
+        this.book = book;
+        this.createdAt = LocalDate.now();
+    }
 
     public String getChapterId() {
         return chapterId;

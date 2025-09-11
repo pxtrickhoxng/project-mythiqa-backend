@@ -3,7 +3,7 @@ package com.mythiqa.mythiqabackend.controller;
 
 import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
 import com.mythiqa.mythiqabackend.dto.response.NewChapterNumDTO;
-import com.mythiqa.mythiqabackend.model.Book.Book;
+import com.mythiqa.mythiqabackend.model.Book;
 import com.mythiqa.mythiqabackend.service.BookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,11 +37,6 @@ public class BookController {
         bookService.createBook(createBookRequest, jwt);
         URI location = URI.create("/api/books");
         return ResponseEntity.created(location).build();
-    }
-
-    @GetMapping("/{bookId}/new-chapter-num")
-    public NewChapterNumDTO getChapterNum(@PathVariable int bookId) {
-        return
     }
 
     //TODO
