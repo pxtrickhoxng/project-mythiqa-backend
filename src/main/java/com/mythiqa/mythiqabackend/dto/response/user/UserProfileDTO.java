@@ -1,4 +1,4 @@
-package com.mythiqa.mythiqabackend.dto.response;
+package com.mythiqa.mythiqabackend.dto.response.user;
 
 
 import java.time.LocalDate;

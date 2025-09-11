@@ -1,8 +1,7 @@
 package com.mythiqa.mythiqabackend.controller;
 
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
-import com.mythiqa.mythiqabackend.dto.response.NewChapterNumDTO;
-import com.mythiqa.mythiqabackend.model.ChapterContent;
+import com.mythiqa.mythiqabackend.dto.response.chapter.NewChapterNumDTO;
 import com.mythiqa.mythiqabackend.service.ChapterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

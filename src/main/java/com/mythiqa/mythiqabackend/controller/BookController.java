@@ -2,7 +2,7 @@ package com.mythiqa.mythiqabackend.controller;
 
 
 import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
-import com.mythiqa.mythiqabackend.dto.response.NewChapterNumDTO;
+import com.mythiqa.mythiqabackend.dto.response.book.BookDTO;
 import com.mythiqa.mythiqabackend.model.Book;
 import com.mythiqa.mythiqabackend.service.BookService;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class BookController {
     }
 
     @GetMapping("/{bookId}")
-    public Book getBook(@PathVariable int bookId) {
+    public BookDTO getBook(@PathVariable int bookId) {
         return bookService.getBookByBookId(bookId);
     }
 

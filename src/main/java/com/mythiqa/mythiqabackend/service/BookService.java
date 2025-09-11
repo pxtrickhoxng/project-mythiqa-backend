@@ -2,10 +2,9 @@ package com.mythiqa.mythiqabackend.service;
 
 import com.mythiqa.mythiqabackend.config.S3Config;
 import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
-import com.mythiqa.mythiqabackend.dto.response.NewChapterNumDTO;
+import com.mythiqa.mythiqabackend.dto.response.book.BookDTO;
 import com.mythiqa.mythiqabackend.model.Book;
 import com.mythiqa.mythiqabackend.repository.BookRepository;
-import com.mythiqa.mythiqabackend.repository.ChapterRepository;
 import com.mythiqa.mythiqabackend.repository.UserRepository;
 import com.mythiqa.mythiqabackend.util.JwtUtils;
 import org.springframework.http.HttpStatus;
@@ -33,7 +32,7 @@ public class BookService {
         return bookRepository.getBooksByUserId(userId);
     }
 
-    public Book getBookByBookId (int bookId) {
+    public BookDTO getBookByBookId (int bookId) {
         return bookRepository.getBookByBookId(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }

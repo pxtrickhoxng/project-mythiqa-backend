@@ -1,4 +1,4 @@
-package com.mythiqa.mythiqabackend.dto.response;
+package com.mythiqa.mythiqabackend.dto.response.user;
 
 public class UserProfileAndBackgroundImagesDTO {
     private String userBackgroundImgUrl;

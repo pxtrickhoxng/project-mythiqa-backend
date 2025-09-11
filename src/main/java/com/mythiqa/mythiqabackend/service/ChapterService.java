@@ -1,7 +1,7 @@
 package com.mythiqa.mythiqabackend.service;
 
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
-import com.mythiqa.mythiqabackend.dto.response.NewChapterNumDTO;
+import com.mythiqa.mythiqabackend.dto.response.chapter.NewChapterNumDTO;
 import com.mythiqa.mythiqabackend.model.Book;
 import com.mythiqa.mythiqabackend.model.Chapter;
 import com.mythiqa.mythiqabackend.repository.BookRepository;

@@ -3,26 +3,20 @@ package com.mythiqa.mythiqabackend.controller;
 import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateDisplayNameRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
-import com.mythiqa.mythiqabackend.dto.response.*;
-import com.mythiqa.mythiqabackend.model.User;
-import com.mythiqa.mythiqabackend.projection.user.UserDisplayNameProjection;
-import com.mythiqa.mythiqabackend.projection.user.UserProfileImgProjection;
-import com.mythiqa.mythiqabackend.projection.user.UserProfileProjection;
+import com.mythiqa.mythiqabackend.dto.response.user.UserDisplayNameDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserNumOfBooksDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserProfileDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserProfileImgDTO;
 import com.mythiqa.mythiqabackend.repository.BookRepository;
 import com.mythiqa.mythiqabackend.repository.UserRepository;
 import com.mythiqa.mythiqabackend.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")

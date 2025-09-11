@@ -4,11 +4,10 @@ import com.mythiqa.mythiqabackend.config.S3Config;
 import com.mythiqa.mythiqabackend.dto.request.CreateUserRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateDisplayNameRequestDTO;
 import com.mythiqa.mythiqabackend.dto.request.UpdateUserRequestDto;
-import com.mythiqa.mythiqabackend.dto.response.UserDisplayNameDTO;
-import com.mythiqa.mythiqabackend.dto.response.UserNumOfBooksDTO;
-import com.mythiqa.mythiqabackend.dto.response.UserProfileDTO;
-import com.mythiqa.mythiqabackend.dto.response.UserProfileImgDTO;
-import com.mythiqa.mythiqabackend.exception.UsernameAlreadyTakenException;
+import com.mythiqa.mythiqabackend.dto.response.user.UserDisplayNameDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserNumOfBooksDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserProfileDTO;
+import com.mythiqa.mythiqabackend.dto.response.user.UserProfileImgDTO;
 import com.mythiqa.mythiqabackend.model.User;
 import com.mythiqa.mythiqabackend.projection.user.UserDisplayNameProjection;
 import com.mythiqa.mythiqabackend.projection.user.UserProfileImgProjection;
@@ -18,16 +17,10 @@ import com.mythiqa.mythiqabackend.repository.UserRepository;
 import com.mythiqa.mythiqabackend.util.JwtUtils;
 import com.mythiqa.mythiqabackend.util.S3Utils;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class UserService {
