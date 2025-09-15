@@ -45,7 +45,7 @@ public class UserService {
 
     public UserProfileDTO getUserProfileByUsername (String username) {
         UserProfileProjection projection = userRepository.findUserProfileByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not retrieve profile"));
         return new UserProfileDTO.Builder()
                 .displayName(projection.getDisplayName())
                 .description(projection.getDescription())
@@ -60,7 +60,7 @@ public class UserService {
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         boolean userExists = userRepository.existsById(requesterUserId);
         if (userExists) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists, could not create user");
         }
 
         User user = new User(dto, requesterUserId);
@@ -71,7 +71,7 @@ public class UserService {
     public void updateUser(UpdateUserRequestDto updateUser, Jwt jwt) {
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         User user = userRepository.findById(requesterUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not update user"));
 
         String oldBgImgKey = S3Utils.extractS3ObjectKey(user.getUserBackgroundImgUrl());
         String oldProfileImgKey = S3Utils.extractS3ObjectKey(user.getUserProfileImgUrl());
@@ -119,7 +119,7 @@ public class UserService {
     public void deleteUser(Jwt jwt) {
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         if (!userRepository.existsById(requesterUserId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not delete user");
         }
 
         userRepository.deleteById(requesterUserId);
@@ -127,13 +127,13 @@ public class UserService {
 
     public UserProfileImgDTO getProfileImgByUsername(String username) {
         UserProfileImgProjection projection = userRepository.findUserProfileImgByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not get profile img"));
         return new UserProfileImgDTO(projection.getUserProfileImgUrl());
     }
 
     public UserDisplayNameDTO getDisplayNameByUsername(String username) {
         UserDisplayNameProjection projection = userRepository.findDisplayNameByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not get display name"));
         return new UserDisplayNameDTO(projection.getDisplayName());
     }
 
@@ -146,7 +146,7 @@ public class UserService {
     public void updateDisplayName(UpdateDisplayNameRequestDTO dto, Jwt jwt) {
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
         User user = userRepository.findById(requesterUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found, could not update display name"));
 
         user.setDisplayName(dto.getDisplayName());
         userRepository.save(user);

@@ -4,6 +4,7 @@ import com.mythiqa.mythiqabackend.config.S3Config;
 import com.mythiqa.mythiqabackend.dto.request.CreateBookRequestDTO;
 import com.mythiqa.mythiqabackend.dto.response.book.BookDTO;
 import com.mythiqa.mythiqabackend.model.Book;
+import com.mythiqa.mythiqabackend.projection.book.PublicBookProjection;
 import com.mythiqa.mythiqabackend.repository.BookRepository;
 import com.mythiqa.mythiqabackend.repository.UserRepository;
 import com.mythiqa.mythiqabackend.util.JwtUtils;
@@ -33,8 +34,20 @@ public class BookService {
     }
 
     public BookDTO getBookByBookId (int bookId) {
-        return bookRepository.getBookByBookId(bookId)
+        PublicBookProjection projection = bookRepository.getPublicBookByBookId(bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return new BookDTO.Builder()
+                .bookId(projection.getBookId())
+                .userId(projection.getUserId())
+                .bookName(projection.getBookName())
+                .bookType(projection.getBookType())
+                .description(projection.getDescription())
+                .genre(projection.getGenre())
+                .targetAudience(projection.getTargetAudience())
+                .contentWarnings(projection.getContentWarnings())
+                .bookCoverUrl(projection.getBookCoverUrl())
+                .createdAt(projection.getCreatedAt())
+                .build();
     }
 
     public void createBook (CreateBookRequestDTO dto, Jwt jwt) {
