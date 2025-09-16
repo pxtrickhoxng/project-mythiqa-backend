@@ -16,4 +16,5 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     Optional<PublicBookProjection> getPublicBookByBookId(Integer bookId);
     Optional<Book> getBookByBookId(Integer bookId);
     boolean existsByBookName(String bookName);
+    boolean existsByBookId(Integer bookId);
 }
