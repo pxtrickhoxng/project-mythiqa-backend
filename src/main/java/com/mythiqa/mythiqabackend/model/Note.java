@@ -13,9 +13,8 @@ public class Note {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String noteId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "book_id")
-    private Book book;
+    @Column(name = "book_id")
+    private int bookId;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
@@ -46,8 +45,8 @@ public class Note {
 
     public Note () {}
 
-    public Note (CreateNoteDTO dto, Book book, String imgUrls) {
-        this.book = book;
+    public Note (CreateNoteDTO dto, String imgUrls) {
+        this.bookId = dto.getBookId();
         this.userId = dto.getUserId();
         this.title = dto.getTitle();
         this.noteContent = dto.getNoteContent();
@@ -61,8 +60,8 @@ public class Note {
     public String getNoteId() { return noteId; }
     public void setNoteId(String noteId) { this.noteId = noteId; }
 
-    public Book getBook() { return book; }
-    public void setBook(Book book) { this.book = book; }
+    public int getBookId() { return bookId; }
+    public void setBookId(int bookId) { this.bookId = bookId; }
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }

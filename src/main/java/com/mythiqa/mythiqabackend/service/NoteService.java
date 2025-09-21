@@ -34,11 +34,11 @@ public class NoteService {
 
     public NoteDTO getNoteByBookId(int bookId, Jwt jwt) {
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
-        Note note = noteRepository.findByUserIdAndBook_BookId(requesterUserId, bookId)
+        Note note = noteRepository.findByUserIdAndBookId(requesterUserId, bookId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find note that matches the sent userId and bookId"));
         return new NoteDTO.Builder()
                 .noteId(note.getNoteId())
-                .bookId(note.getBook().getBookId())
+                .bookId(note.getBookId())
                 .title(note.getTitle())
                 .noteContent(note.getNoteContent())
                 .tags(note.getTags())
@@ -65,10 +65,7 @@ public class NoteService {
             imgUrls = String.join(",", urls);
         }
 
-        Book book = bookRepository.getBookByBookId(dto.getBookId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));
-
-        Note note = new Note(dto, book, imgUrls);
+        Note note = new Note(dto, imgUrls);
         noteRepository.save(note);
     }
 }

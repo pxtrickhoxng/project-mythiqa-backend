@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, String> {
 
-    Optional<Note> findByUserIdAndBook_BookId(String userId, Integer bookId);
+    Optional<Note> findByUserIdAndBookId(String userId, Integer bookId);
 }
