@@ -1,5 +1,6 @@
 package com.mythiqa.mythiqabackend.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.GetChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.NewChapterNumDTO;
@@ -87,6 +88,22 @@ public class ChapterService {
     }
 
     public void createNewChapter(CreateChapterDTO chapterDTO, Jwt jwt) {
+        Object chapterContent = chapterDTO.getChapterContent();
+        if (chapterContent == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is missing");
+        }
+
+        String contentStr;
+        try {
+            contentStr = new ObjectMapper().writeValueAsString(chapterContent);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chapter content format");
+        }
+
+        if (!contentStr.contains("\"text\"")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is empty");
+        }
+
         String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
 
         Book book = bookRepository.getBookByBookId(chapterDTO.getBookId())
