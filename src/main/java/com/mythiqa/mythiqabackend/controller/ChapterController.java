@@ -1,10 +1,12 @@
 package com.mythiqa.mythiqabackend.controller;
 
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
+import com.mythiqa.mythiqabackend.dto.request.UpdateChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.GetChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.ReadChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.NewChapterNumDTO;
 import com.mythiqa.mythiqabackend.service.ChapterService;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,11 +41,16 @@ public class ChapterController {
         return ResponseEntity.created(location).build();
     }
 
+    @PutMapping("/{chapterId}")
+    public ResponseEntity<Void> updateChapter(@PathVariable String chapterId, @RequestBody UpdateChapterDTO chapterDTO, @AuthenticationPrincipal Jwt jwt) {
+        chapterService.updateChapter(chapterId, chapterDTO, jwt);
+        URI location = URI.create("/api/chapters");
+        return ResponseEntity.created(location).build();
+    }
+
     @GetMapping("/read/{bookId}/{chapterId}")
     public ReadChapterDTO getOneChapter(@PathVariable int bookId, @PathVariable String chapterId) {
         return chapterService.getChapterViewByChapterId(bookId, chapterId);
     }
-    // Return these:
-    // {chapter, prevChapter, nextChapter}
-    // where chapter == all content, while the others are only chapterName + chapterNumber + chapterId
+
 }

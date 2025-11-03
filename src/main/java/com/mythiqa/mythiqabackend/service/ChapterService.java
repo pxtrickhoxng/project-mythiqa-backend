@@ -2,6 +2,7 @@ package com.mythiqa.mythiqabackend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
+import com.mythiqa.mythiqabackend.dto.request.UpdateChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.GetChapterDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.NewChapterNumDTO;
 import com.mythiqa.mythiqabackend.dto.response.chapter.ReadChapterDTO;
@@ -114,6 +115,35 @@ public class ChapterService {
         }
 
         Chapter chapter = new Chapter(chapterDTO, book);
+        chapterRepository.save(chapter);
+    }
+
+    public void updateChapter (String chapterId, UpdateChapterDTO chapterDTO, Jwt jwt) {
+        Object chapterContent = chapterDTO.getChapterContent();
+        if (chapterContent == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is missing");
+        }
+
+        String contentStr;
+        try {
+            contentStr = new ObjectMapper().writeValueAsString(chapterContent);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chapter content format");
+        }
+
+        if (!contentStr.contains("\"text\"")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is empty");
+        }
+
+        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (!chapter.getBook().getUserId().equals(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        chapter.setChapterContent(chapterDTO.getChapterContent());
         chapterRepository.save(chapter);
     }
 }
