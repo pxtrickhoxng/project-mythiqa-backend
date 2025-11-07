@@ -1,12 +1,12 @@
 package com.mythiqa.mythiqabackend.dto.request;
 
-import com.mythiqa.mythiqabackend.model.ChapterContent;
+import com.mythiqa.mythiqabackend.model.RichEditor;
 
 public class CreateChapterDTO {
     String chapterName;
     int chapterNumber;
     int bookId;
-    ChapterContent chapterContent;
+    RichEditor richEditor;
 
     public CreateChapterDTO() {}
 
@@ -34,11 +34,11 @@ public class CreateChapterDTO {
         this.bookId = bookId;
     }
 
-    public ChapterContent getChapterContent() {
-        return chapterContent;
+    public RichEditor getChapterContent() {
+        return richEditor;
     }
 
-    public void setChapterContent(ChapterContent chapterContent) {
-        this.chapterContent = chapterContent;
+    public void setChapterContent(RichEditor richEditor) {
+        this.richEditor = richEditor;
     }
 }

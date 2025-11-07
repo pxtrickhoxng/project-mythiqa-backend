@@ -3,14 +3,14 @@ package com.mythiqa.mythiqabackend.model;
 import java.util.List;
 import java.util.Map;
 
-public class ChapterContent {
+public class RichEditor {
     private String type;
     private Map<String, Object> attrs;
-    private List<ChapterContent> content;
+    private List<RichEditor> content;
     private List<Mark> marks;
     private String text;
 
-    public ChapterContent() {}
+    public RichEditor() {}
 
     public String getType() {
         return type;
@@ -28,11 +28,11 @@ public class ChapterContent {
         this.attrs = attrs;
     }
 
-    public List<ChapterContent> getContent() {
+    public List<RichEditor> getContent() {
         return content;
     }
 
-    public void setContent(List<ChapterContent> content) {
+    public void setContent(List<RichEditor> content) {
         this.content = content;
     }
 

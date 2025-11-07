@@ -1,16 +1,16 @@
 package com.mythiqa.mythiqabackend.dto.request;
 
-import com.mythiqa.mythiqabackend.model.ChapterContent;
+import com.mythiqa.mythiqabackend.model.RichEditor;
 
 public class UpdateChapterDTO {
-    ChapterContent chapterContent;
+    RichEditor richEditor;
 
-    public UpdateChapterDTO (ChapterContent chapterContent) {
-        this.chapterContent = chapterContent;
+    public UpdateChapterDTO (RichEditor richEditor) {
+        this.richEditor = richEditor;
     }
     public UpdateChapterDTO(){}
 
-    public ChapterContent getChapterContent() {
-        return chapterContent;
+    public RichEditor getChapterContent() {
+        return richEditor;
     }
 }

@@ -1,6 +1,6 @@
 package com.mythiqa.mythiqabackend.model;
 
-import com.mythiqa.mythiqabackend.converter.ChapterContentConverter;
+import com.mythiqa.mythiqabackend.converter.RichEditorConverter;
 import com.mythiqa.mythiqabackend.dto.request.CreateChapterDTO;
 import jakarta.persistence.*;
 
@@ -22,8 +22,8 @@ public class Chapter {
     private String chapterName;
 
     @Column(name = "chapter_content", columnDefinition = "text")
-    @Convert(converter = ChapterContentConverter.class)
-    private ChapterContent chapterContent;
+    @Convert(converter = RichEditorConverter.class)
+    private RichEditor richEditor;
 
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
@@ -37,7 +37,7 @@ public class Chapter {
     public Chapter (CreateChapterDTO dto, Book book) {
         this.chapterNumber = dto.getChapterNumber();
         this.chapterName = dto.getChapterName();
-        this.chapterContent = dto.getChapterContent();
+        this.richEditor = dto.getChapterContent();
         this.book = book;
         this.createdAt = LocalDate.now();
     }
@@ -66,12 +66,12 @@ public class Chapter {
         this.chapterName = chapterName;
     }
 
-    public ChapterContent getChapterContent() {
-        return chapterContent;
+    public RichEditor getChapterContent() {
+        return richEditor;
     }
 
-    public void setChapterContent(ChapterContent chapterContent) {
-        this.chapterContent = chapterContent;
+    public void setChapterContent(RichEditor richEditor) {
+        this.richEditor = richEditor;
     }
 
     public LocalDate getCreatedAt() {
