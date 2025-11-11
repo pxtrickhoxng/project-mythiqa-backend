@@ -89,61 +89,59 @@ public class ChapterService {
     }
 
     public void createNewChapter(CreateChapterDTO chapterDTO, Jwt jwt) {
-        Object chapterContent = chapterDTO.getChapterContent();
-        if (chapterContent == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is missing");
-        }
-
-        String contentStr;
-        try {
-            contentStr = new ObjectMapper().writeValueAsString(chapterContent);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chapter content format");
-        }
-
-        if (!contentStr.contains("\"text\"")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is empty");
-        }
-
-        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
-
-        Book book = bookRepository.getBookByBookId(chapterDTO.getBookId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        if (!book.getUserId().equals(requesterUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
+        String requesterUserId = validateAndExtractUser(jwt, chapterDTO.getChapterContent());
+        Book book = getAuthorizedBook(chapterDTO.getBookId(), requesterUserId);
         Chapter chapter = new Chapter(chapterDTO, book);
         chapterRepository.save(chapter);
     }
 
     public void updateChapter (String chapterId, UpdateChapterDTO chapterDTO, Jwt jwt) {
-        Object chapterContent = chapterDTO.getChapterContent();
+        String requesterUserId = validateAndExtractUser(jwt, chapterDTO.getChapterContent());
+        Chapter chapter = getAuthorizedChapter(chapterId, requesterUserId);
+        chapter.setChapterContent(chapterDTO.getChapterContent());
+        chapterRepository.save(chapter);
+    }
+
+    // Helpers
+    private String validateAndExtractUser(Jwt jwt, Object chapterContent) {
+        validateChapterContent(chapterContent);
+        return getRequesterUserId(jwt);
+    }
+
+    private void validateChapterContent(Object chapterContent) {
         if (chapterContent == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is missing");
         }
-
         String contentStr;
         try {
             contentStr = new ObjectMapper().writeValueAsString(chapterContent);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid chapter content format");
         }
-
         if (!contentStr.contains("\"text\"")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chapter content is empty");
         }
+    }
 
-        String requesterUserId = JwtUtils.getUserIdFromJwt(jwt);
+    private String getRequesterUserId(Jwt jwt) {
+        return JwtUtils.getUserIdFromJwt(jwt);
+    }
+
+    private Book getAuthorizedBook(int bookId, String requesterUserId) {
+        Book book = bookRepository.getBookByBookId(bookId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!book.getUserId().equals(requesterUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return book;
+    }
+
+    private Chapter getAuthorizedChapter(String chapterId, String requesterUserId) {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
         if (!chapter.getBook().getUserId().equals(requesterUserId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-
-        chapter.setChapterContent(chapterDTO.getChapterContent());
-        chapterRepository.save(chapter);
+        return chapter;
     }
 }

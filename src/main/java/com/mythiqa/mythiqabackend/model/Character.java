@@ -1,14 +1,19 @@
 package com.mythiqa.mythiqabackend.model;
 
-import com.mythiqa.mythiqabackend.converter.RichEditorConverter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.mythiqa.mythiqabackend.converter.AppearanceJsonConverter;
+import com.mythiqa.mythiqabackend.converter.ListToJsonConverter;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "characters")
 public class Character {
     @Id
-    @Column(name = "character_id")
+    @Column(name = "character_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String characterId;
 
     @Column(name = "name", nullable = false)
@@ -18,7 +23,8 @@ public class Character {
     private String image;
 
     @Column(name = "nicknames")
-    private String nicknames; // Will be stored as JSON array string
+    @Convert(converter = ListToJsonConverter.class)
+    private List<String> nicknames; // Stored as JSON array
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
@@ -31,33 +37,32 @@ public class Character {
     @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "gender_custom")
-    private String genderCustom;
-
     @Column(name = "race_or_species")
     private String raceOrSpecies;
 
-    @Column(name = "role", nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Role role;
 
     @Column(name = "faction")
     private String faction;
 
     @Column(name = "personality_traits")
-    private String personalityTraits; // Will be stored as JSON array string
+    @Convert(converter = ListToJsonConverter.class)
+    private List<String> personalityTraits;
 
     @Column(name = "speech_patterns")
     private String speechPatterns;
 
     @Column(name = "appearance", columnDefinition = "json")
-    private String appearance;
+    @Convert(converter = AppearanceJsonConverter.class)
+    private Appearance appearance; // Stored as structured object
 
     @Column(name = "backstory", columnDefinition = "text")
     private String backstory;
 
-    @Column(name = "general_notes", columnDefinition = "json")
-    @Convert(converter = RichEditorConverter.class)
-    private RichEditor generalNotes; // Will store Tiptap JSON format similar to ChapterContent
+    @Column(name = "general_notes", columnDefinition = "text")
+    private String generalNotes;
 
     @Column(name = "created_at", nullable = false)
     private LocalDate createdAt;
@@ -68,15 +73,62 @@ public class Character {
     public enum Gender {
         MALE,
         FEMALE,
-        CUSTOM
+        OTHER;
+
+        @JsonCreator
+        public static Gender fromValue(String value) {
+            if (value == null) return null;
+            switch (value.toLowerCase()) {
+                case "male": return MALE;
+                case "female": return FEMALE;
+                case "other": return OTHER;
+                default: return OTHER;
+            }
+        }
+
+        @JsonValue
+        public String toValue() {
+            switch (this) {
+                case MALE: return "male";
+                case FEMALE: return "female";
+                case OTHER: default: return "other";
+            }
+        }
+    }
+
+    public enum Role {
+        PROTAGONIST,
+        ANTAGONIST,
+        SIDE_CHARACTER;
+
+        @JsonCreator
+        public static Role fromValue(String value) {
+            if (value == null) return null;
+            switch (value.toLowerCase()) {
+                case "protagonist": return PROTAGONIST;
+                case "antagonist": return ANTAGONIST;
+                case "side_character": return SIDE_CHARACTER;
+            }
+            throw new IllegalArgumentException("Unknown value: " + value);
+        }
+
+        @JsonValue
+        public String toValue() {
+            switch (this) {
+                case PROTAGONIST: return "protagonist";
+                case ANTAGONIST: return "antagonist";
+                case SIDE_CHARACTER: return "side_character";
+            }
+            throw new IllegalArgumentException("Unknown value: " + this);
+        }
     }
 
     public Character() {}
 
-    public Character(String characterId, String name, String image, String nicknames, Book book,
-                    Integer age, Gender gender, String genderCustom, String raceOrSpecies,
-                    String role, String faction, String personalityTraits, String speechPatterns,
-                    String appearance, String backstory, RichEditor generalNotes) {
+    public Character(String characterId, String name, String image, List<String> nicknames, Book book,
+                    Integer age, Gender gender, String raceOrSpecies,
+                    Role role, String faction, List<String> personalityTraits, String speechPatterns,
+                    Appearance appearance, String backstory, String generalNotes) {
         this.characterId = characterId;
         this.name = name;
         this.image = image;
@@ -84,9 +136,9 @@ public class Character {
         this.book = book;
         this.age = age;
         this.gender = gender;
-        this.genderCustom = genderCustom;
         this.raceOrSpecies = raceOrSpecies;
         this.role = role;
+        this.faction = faction;
         this.personalityTraits = personalityTraits;
         this.speechPatterns = speechPatterns;
         this.appearance = appearance;
@@ -120,11 +172,11 @@ public class Character {
         this.image = image;
     }
 
-    public String getNicknames() {
+    public List<String> getNicknames() {
         return nicknames;
     }
 
-    public void setNicknames(String nicknames) {
+    public void setNicknames(List<String> nicknames) {
         this.nicknames = nicknames;
     }
 
@@ -152,14 +204,6 @@ public class Character {
         this.gender = gender;
     }
 
-    public String getGenderCustom() {
-        return genderCustom;
-    }
-
-    public void setGenderCustom(String genderCustom) {
-        this.genderCustom = genderCustom;
-    }
-
     public String getRaceOrSpecies() {
         return raceOrSpecies;
     }
@@ -168,11 +212,11 @@ public class Character {
         this.raceOrSpecies = raceOrSpecies;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -184,11 +228,11 @@ public class Character {
         this.faction = faction;
     }
 
-    public String getPersonalityTraits() {
+    public List<String> getPersonalityTraits() {
         return personalityTraits;
     }
 
-    public void setPersonalityTraits(String personalityTraits) {
+    public void setPersonalityTraits(List<String> personalityTraits) {
         this.personalityTraits = personalityTraits;
     }
 
@@ -200,11 +244,11 @@ public class Character {
         this.speechPatterns = speechPatterns;
     }
 
-    public String getAppearance() {
+    public Appearance getAppearance() {
         return appearance;
     }
 
-    public void setAppearance(String appearance) {
+    public void setAppearance(Appearance appearance) {
         this.appearance = appearance;
     }
 
@@ -216,11 +260,11 @@ public class Character {
         this.backstory = backstory;
     }
 
-    public RichEditor getGeneralNotes() {
+    public String getGeneralNotes() {
         return generalNotes;
     }
 
-    public void setGeneralNotes(RichEditor generalNotes) {
+    public void setGeneralNotes(String generalNotes) {
         this.generalNotes = generalNotes;
     }
 
