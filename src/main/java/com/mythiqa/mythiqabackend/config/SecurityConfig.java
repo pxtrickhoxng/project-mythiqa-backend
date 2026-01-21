@@ -25,6 +25,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/books/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/chapters/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/home").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
