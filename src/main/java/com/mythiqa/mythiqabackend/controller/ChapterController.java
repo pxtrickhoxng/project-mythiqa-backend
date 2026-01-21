@@ -48,6 +48,13 @@ public class ChapterController {
         return ResponseEntity.created(location).build();
     }
 
+    @DeleteMapping("/{chapterId}")
+    public ResponseEntity<Void> deleteChapter(@PathVariable String chapterId, @AuthenticationPrincipal Jwt jwt) {
+        System.out.println("delete endpoint hit");
+        chapterService.deleteChapter(chapterId, jwt);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/read/{bookId}/{chapterId}")
     public ReadChapterDTO getOneChapter(@PathVariable int bookId, @PathVariable String chapterId) {
         return chapterService.getChapterViewByChapterId(bookId, chapterId);

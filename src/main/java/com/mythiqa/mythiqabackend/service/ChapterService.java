@@ -102,6 +102,13 @@ public class ChapterService {
         chapterRepository.save(chapter);
     }
 
+    public void deleteChapter(String chapterId, Jwt jwt) {
+        String requesterUserId = getRequesterUserId(jwt);
+        Chapter chapter = getAuthorizedChapter(chapterId, requesterUserId);
+        chapterRepository.delete(chapter);
+        System.out.println("Delete service hit");
+    }
+
     // Helpers
     private String validateAndExtractUser(Jwt jwt, Object chapterContent) {
         validateChapterContent(chapterContent);
