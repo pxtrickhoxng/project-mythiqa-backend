@@ -1,0 +1,39 @@
+name: Build and Push Backend Image
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::078183418709:role/mythiqa-backend-workflow
+          aws-region: us-east-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t backend .
+
+      - name: Tag and push image
+        run: |
+          IMAGE_URI=<ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/backend
+          IMAGE_TAG=${{ github.sha }}
+
+          docker tag backend:latest $IMAGE_URI:$IMAGE_TAG
+          docker push $IMAGE_URI:$IMAGE_TAG
